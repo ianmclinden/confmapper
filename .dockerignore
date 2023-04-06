@@ -1,0 +1,17 @@
+# ---> Project Specific
+# Outputs
+build/
+# Test databases
+mapper.db
+# Local conv files
+*.env
+# Sample Files & Documentation
+README.md
+confmapper.yml
+# CI
+.github/
+
+# ---> Rust
+# Outputs
+debug/
+target/

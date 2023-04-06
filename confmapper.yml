@@ -1,0 +1,19 @@
+version: "3.5"
+
+services:
+  # Conference mapper component
+  confmapper:
+    image: ijmclinden/confmapper:${CONFERENCE_MAPPER_IMAGE_VERSION:-main}
+    restart: ${RESTART_POLICY:-unless-stopped}
+    expose:
+      - "${CONFERENCE_MAPPER_PORT:-9000}"
+    volumes:
+      - ${CONFIG}/confmapper:/config:Z
+    environment:
+      - CONFERENCE_MAPPER_PHONELIST
+      - CONFERENCE_MAPPER_DATABASE
+      - CONFERENCE_MAPPER_PORT
+      - CONFERENCE_MAPPER_ID_LENGTH
+
+networks:
+  meet.jitsi:
