@@ -1,6 +1,9 @@
+use std::{env, io, path::Path};
+
 use actix_web::{middleware, web::Data, App, HttpServer};
+use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use phone_list::PhoneNumbers;
-use std::{env, io};
+
 use structopt::StructOpt;
 
 mod conference;
@@ -29,6 +32,24 @@ struct Args {
     /// Number of digits to use for conference id (6-12)
     #[structopt(short, long, env = "CONFERENCE_MAPPER_ID_LENGTH", default_value = "6")]
     id_length: u32,
+
+    /// TLS Certificate file
+    #[structopt(
+        short = "c",
+        long = "certs",
+        env = "CONFERENCE_MAPPER_TLS_CERT",
+        default_value = "keys/cert.crt"
+    )]
+    tls_cert_file: String,
+
+    /// TLS Key file
+    #[structopt(
+        short = "k",
+        long = "key",
+        env = "CONFERENCE_MAPPER_TLS_KEY",
+        default_value = "keys/cert.key"
+    )]
+    tls_key_file: String,
 }
 
 #[actix_rt::main]
@@ -46,12 +67,24 @@ async fn main() -> io::Result<()> {
     }
     let id_length = Data::new(args.id_length);
 
+    let mut sslbuilder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+    let mut uses_openssl = false;
+    if Path::new(&args.tls_cert_file).exists() && Path::new(&args.tls_key_file).exists() {
+        sslbuilder
+            .set_private_key_file(args.tls_key_file, SslFiletype::PEM)
+            .expect("Could not read TLS key file");
+        sslbuilder
+            .set_certificate_chain_file(args.tls_cert_file)
+            .expect("Could not read TLS cert file");
+        uses_openssl = true;
+    }
+
     env::set_var("RUST_LOG", "actix_web=debug");
     env_logger::init();
 
     let db = Data::new(sled::open(args.database)?);
 
-    HttpServer::new(move || {
+    let server = HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             // Shared data
@@ -62,8 +95,15 @@ async fn main() -> io::Result<()> {
             .service(conference::get)
             .service(conference::set)
             .service(phone_list::get)
-    })
-    .bind(("0.0.0.0", args.port))?
-    .run()
-    .await
+    });
+    if uses_openssl {
+        println!("Listening on https://0.0.0.0:{}", args.port);
+        server
+            .bind_openssl(("0.0.0.0", args.port), sslbuilder)?
+            .run()
+            .await
+    } else {
+        println!("Listening on http://0.0.0.0:{}", args.port);
+        server.bind(("0.0.0.0", args.port))?.run().await
+    }
 }
