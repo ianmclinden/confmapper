@@ -32,5 +32,6 @@ pub async fn get(phone_list: Data<PhoneNumbers>) -> HttpResponse {
     }
     HttpResponse::Ok()
         .content_type("application/json")
+        .insert_header(("access-control-allow-origin", "*"))
         .json(list)
 }

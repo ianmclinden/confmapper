@@ -92,6 +92,7 @@ pub async fn get(
 ) -> HttpResponse {
     HttpResponse::Ok()
         .content_type("application/json")
+        .insert_header(("access-control-allow-origin", "*"))
         .json(insert_conference(
             db,
             query.id.unwrap_or(0),
@@ -105,6 +106,7 @@ pub async fn get(
 pub async fn set(conference: Json<Conference>, db: Data<Db>, id_length: Data<u32>) -> HttpResponse {
     HttpResponse::Created()
         .content_type("application/json")
+        .insert_header(("access-control-allow-origin", "*"))
         .json(insert_conference(
             db,
             conference.id,
