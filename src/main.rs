@@ -1,5 +1,5 @@
 use actix_web::{middleware, web::Data, App, HttpServer};
-use phone_list::PhoneNumber;
+use phone_list::PhoneNumbers;
 use std::{env, io};
 use structopt::StructOpt;
 
@@ -35,7 +35,7 @@ struct Args {
 async fn main() -> io::Result<()> {
     let args = Args::from_args();
 
-    let mut numbers: Vec<PhoneNumber> = Vec::new();
+    let mut numbers = PhoneNumbers::new();
     if args.phone_list.is_some() {
         numbers = serde_json::from_str(&args.phone_list.unwrap()).expect("Invalid phone list");
     }

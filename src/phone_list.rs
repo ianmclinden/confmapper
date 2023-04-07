@@ -1,29 +1,36 @@
+use std::collections::HashMap;
+
 use actix_web::{get, web::Data, HttpResponse};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct PhoneNumber {
-    #[serde(rename = "countryCode")]
-    pub country_code: String,
-    #[serde(rename = "tollFree", default)]
-    pub toll_free: bool,
-    #[serde(rename = "formattedNumber")]
-    pub formatted_number: String,
-}
+pub type PhoneNumbers = HashMap<String, Vec<String>>;
 
-impl Default for PhoneNumber {
-    fn default() -> Self {
-        Self {
-            country_code: "".to_owned(),
-            toll_free: false,
-            formatted_number: "".to_owned(),
-        }
-    }
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct PhoneNumberList {
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub message: String,
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    pub numbers: PhoneNumbers,
+    #[serde(rename = "numbersEnabled")]
+    pub numbers_enabled: bool,
 }
 
 #[get("/phoneNumberList")]
-pub async fn get(phone_list: Data<Vec<PhoneNumber>>) -> HttpResponse {
+pub async fn get(phone_list: Data<PhoneNumbers>) -> HttpResponse {
+    let mut list = PhoneNumberList {
+        message: if !phone_list.is_empty() {
+            "Phone numbers available.".to_string()
+        } else {
+            "".to_string()
+        },
+        numbers_enabled: !phone_list.is_empty(),
+        numbers: PhoneNumbers::new(),
+    };
+    for number in phone_list.iter() {
+        list.numbers
+            .insert(number.0.to_owned(), number.1.to_owned());
+    }
     HttpResponse::Ok()
         .content_type("application/json")
-        .json(phone_list)
+        .json(list)
 }
