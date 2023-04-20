@@ -16,7 +16,7 @@ pub struct Conference {
     pub message: String,
     /// ID to search for existing conference mapping. Only used when provided alone (search by ID)
     #[serde(default)]
-    pub id: u32,
+    pub id: u64,
     /// Full JID (room@conference.server.domain) for the conference to create or return existing conference mapping.
     /// Used preferentially over all other input parameters (search by conference)
     #[serde(default)]
@@ -35,17 +35,24 @@ impl Default for Conference {
 
 #[derive(Deserialize)]
 pub struct ConferenceParams {
-    pub id: Option<u32>,
+    pub id: Option<u64>,
     pub conference: Option<String>,
 }
 
-fn conference_hash(conf: &str, digits: u32) -> u32 {
+fn conference_hash(conf: &str, digits: u32) -> u64 {
     let mut s = DefaultHasher::new();
-    conf.hash(&mut s);
-    (s.finish() % u64::pow(10, digits)).try_into().unwrap_or(0)
+
+    loop {
+        // Lazily hash until we have exactly `digits` digits
+        conf.hash(&mut s);
+        let hash = s.finish() % u64::pow(10, digits);
+        if hash.to_string().len() == (digits as usize) {
+            break hash;
+        }
+    }
 }
 
-fn insert_conference(db: Data<Db>, try_id: u32, try_conf: &str, digits: u32) -> Conference {
+fn insert_conference(db: Data<Db>, try_id: u64, try_conf: &str, digits: u32) -> Conference {
     let mut conference = Conference::default();
 
     match (try_id, try_conf.is_empty()) {
@@ -113,4 +120,38 @@ pub async fn set(conference: Json<Conference>, db: Data<Db>, id_length: Data<u32
             &conference.conference,
             **id_length,
         ))
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+    use rand::distributions::{Alphanumeric, DistString};
+
+    #[test]
+    fn test_generate_hash() {
+        // Test 20 times for better collision checking
+        for _ in 0..20 {
+            // Test all strings from {1..100} for {6..13} digit hashes
+            for digits in 6..13 {
+                // Hashes are only going to be unique for a given digit count
+                let mut known_hashes: Vec<u64> = Vec::new();
+
+                for len in 1..100 {
+                    // Value is always <sample>@<muc domain>
+                    let value = format!(
+                        "{}@muc.jitsi.meet",
+                        Alphanumeric.sample_string(&mut rand::thread_rng(), len)
+                    );
+                    let hash = conference_hash(&value, digits);
+
+                    assert!(hash >= u64::pow(10, digits - 1));
+                    assert!(hash < u64::pow(10, digits));
+
+                    assert!(!known_hashes.contains(&hash));
+                    known_hashes.push(hash);
+                }
+            }
+        }
+    }
 }

@@ -63,7 +63,7 @@ async fn main() -> io::Result<()> {
     let phone_list = Data::new(numbers);
 
     if args.id_length < 6 || args.id_length > 12 {
-        panic!("Invalid id length: '{}' (0-6)", args.id_length);
+        panic!("Invalid id length: '{}' (6-12)", args.id_length);
     }
     let id_length = Data::new(args.id_length);
 
