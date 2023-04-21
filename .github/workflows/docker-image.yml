@@ -24,7 +24,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ijmclinden/confmapper
+          images: ijmclinden/jiconfi
+          tags: |
+            type=semver,pattern={{major}}.{{minor}}.{{patch}},value=${{ env.TAG }},enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.TAG }},enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=semver,pattern={{major}},value=${{ env.TAG }},enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc

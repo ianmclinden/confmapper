@@ -3,7 +3,7 @@ version: "3.5"
 services:
   # Jiconfi conference mapper component
   jiconfi:
-    image: ijmclinden/jiconfi:${CONFERENCE_MAPPER_IMAGE_VERSION:-main}
+    image: ijmclinden/jiconfi:${CONFERENCE_MAPPER_IMAGE_VERSION:-latest}
     restart: ${RESTART_POLICY:-unless-stopped}
     ports:
       - "${CONFERENCE_MAPPER_PORT:-9000}:${CONFERENCE_MAPPER_PORT:-9000}"
