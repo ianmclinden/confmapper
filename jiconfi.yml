@@ -1,14 +1,14 @@
 version: "3.5"
 
 services:
-  # Conference mapper component
-  confmapper:
-    image: ijmclinden/confmapper:${CONFERENCE_MAPPER_IMAGE_VERSION:-main}
+  # Jiconfi conference mapper component
+  jiconfi:
+    image: ijmclinden/jiconfi:${CONFERENCE_MAPPER_IMAGE_VERSION:-main}
     restart: ${RESTART_POLICY:-unless-stopped}
     ports:
       - "${CONFERENCE_MAPPER_PORT:-9000}:${CONFERENCE_MAPPER_PORT:-9000}"
     volumes:
-      - ${CONFIG}/confmapper:/config:Z
+      - ${CONFIG}/jiconfi:/config:Z
       - ${CERTS}/${TLS_CERT_FILE:-cert.fullchain}:/config/keys/cert.crt
       - ${CERTS}/${TLS_KEY_FILE:-cert.key}:/config/keys/cert.key
     environment:

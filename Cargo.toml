@@ -1,5 +1,5 @@
 [package]
-name = "confmapper"
+name = "jiconfi"
 description = "Jitsi Dial-In Mapper API"
 authors = ["Ian McLinden"]
 version = "0.1.0"

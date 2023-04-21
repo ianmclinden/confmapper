@@ -7,7 +7,7 @@ mapper.db
 *.env
 # Sample Files & Documentation
 README.md
-confmapper.yml
+jiconfi.yml
 # CI
 .github/
 
